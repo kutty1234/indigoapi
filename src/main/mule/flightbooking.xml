@@ -1,12 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd ">
-    <apikit:config name="indigoapi-config" api="indigoapi.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
-    <http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="96dd795b-c36f-4fcc-acea-5e731bcb7d31">
-        <http:listener-connection host="0.0.0.0" port="8081" />
-    </http:listener-config>
-    <flow name="indigoapi-main">
-        <http:listener doc:name="Listener" doc:id="1621c30b-75ba-4ce2-8115-46291c05e186" path="/indigo/api/*" config-ref="HTTP_Listener_config"/>
-        <apikit:router config-ref="indigoapi-config" />
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd ">
+    <apikit:config name="flightbooking-config" api="flightbooking.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+    <flow name="flightbooking-main">
+        <http:listener path="/api/*" config-ref="HTTP_Listener_config">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body><![CDATA[#[payload]]]></http:body>
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:router config-ref="flightbooking-config" />
         <error-handler>
             <on-error-propagate type="APIKIT:BAD_REQUEST">
                 <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
@@ -88,8 +93,8 @@ output application/json
             </on-error-propagate>
         </error-handler>
     </flow>
-    <flow name="indigoapi-console">
-        <http:listener path="/indigo/console/*" config-ref="HTTP_Listener_config">
+    <flow name="flightbooking-console">
+        <http:listener path="/console/*" config-ref="HTTP_Listener_config">
             <http:response statusCode="#[vars.httpStatus default 200]">
                 <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
             </http:response>
@@ -98,7 +103,7 @@ output application/json
                 <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
             </http:error-response>
         </http:listener>
-        <apikit:console config-ref="indigoapi-config" />
+        <apikit:console config-ref="flightbooking-config" />
         <error-handler>
             <on-error-propagate type="APIKIT:NOT_FOUND">
                 <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
@@ -115,14 +120,105 @@ output application/json
             </on-error-propagate>
         </error-handler>
     </flow>
-    <flow name="get:\indigoFlights:indigoapi-config">
-        <logger level="INFO" doc:name="Logger" doc:id="1cb5df20-4c03-4f0a-8e03-0c4b4ed34e42" />
-        <flow-ref doc:name="indigoFlightsByUriParams" doc:id="e713cf43-0cc1-4b2c-bf2c-ce0bf2e98001" name="indigoFlightsByUriParamsFlow" />
-        <logger level="INFO" doc:name="Logger" doc:id="d350f5c5-6a53-4478-a08c-95dcbb6e2097" />
+    <flow name="get:\indigoFlights:flightbooking-config">
+        <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+[
+  {
+    ID: 101,
+    airline: "Indigo",
+    flightCode: "IND101",
+    fromAirportCode: "HYD",
+    toAirportCode: "BANG",
+    departureDate: "30-05-2021",
+    emptySeats: 0,
+    totalSeats: 200,
+    price: 199,
+    planeType: "Indigo 737"
+  }, 
+  {
+    ID: 102,
+    airline: "Indigo",
+    flightCode: "IND102",
+    fromAirportCode: "HYD",
+    toAirportCode: "BANG",
+    departureDate: "30-05-2021",
+    emptySeats: 24,
+    totalSeats: 350,
+    price: 450,
+    planeType: "Indigo 747"
+  }, 
+  {
+    ID: 103,
+    airline: "Indigo",
+    flightCode: "IND103",
+    fromAirportCode: "HYD",
+    toAirportCode: "BANG",
+    departureDate: "30-05-2021",
+    emptySeats: 33,
+    totalSeats: 400,
+    price: 450,
+    planeType: "Indigo 757"
+  }
+]]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
     </flow>
-    <flow name="get:\indigoFlights\(source)\(destination)\(doj):indigoapi-config">
-		<logger level="INFO" doc:name="Logger" doc:id="484749f6-5cfd-4937-911c-2579d630fc94" />
-		<flow-ref doc:name="indigoFlightsByUriParams" doc:id="46f25eb9-b822-4179-b8cd-81843b45a54f" name="indigoFlightsByUriParamsFlow"/>
-		<logger level="INFO" doc:name="Logger" doc:id="69f9defd-7148-4400-ab09-5957f42c8d8e" />
+    <flow name="get:\(source)\(destination)\(doj):flightbooking-config">
+        <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core">
+            <ee:variables>
+                <ee:set-variable variableName="source">attributes.uriParams.'source'</ee:set-variable>
+                <ee:set-variable variableName="destination">attributes.uriParams.'destination'</ee:set-variable>
+                <ee:set-variable variableName="doj">attributes.uriParams.'doj'</ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+[
+  {
+    ID: 101,
+    airline: "Indigo",
+    flightCode: "IND101",
+    fromAirportCode: "HYD",
+    toAirportCode: "BANG",
+    departureDate: "30-05-2021",
+    emptySeats: 0,
+    totalSeats: 200,
+    price: 199,
+    planeType: "Indigo 737"
+  }, 
+  {
+    ID: 102,
+    airline: "Indigo",
+    flightCode: "IND102",
+    fromAirportCode: "HYD",
+    toAirportCode: "BANG",
+    departureDate: "30-05-2021",
+    emptySeats: 24,
+    totalSeats: 350,
+    price: 450,
+    planeType: "Indigo 747"
+  }, 
+  {
+    ID: 103,
+    airline: "Indigo",
+    flightCode: "IND103",
+    fromAirportCode: "HYD",
+    toAirportCode: "BANG",
+    departureDate: "30-05-2021",
+    emptySeats: 33,
+    totalSeats: 400,
+    price: 450,
+    planeType: "Indigo 757"
+  }
+]]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
     </flow>
 </mule>

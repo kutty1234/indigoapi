@@ -1,22 +1,22 @@
 #%RAML 1.0
-title: indigoapi
-baseUri: http://localhost:8081/api
+title: flightbooking
+version: v1
 
 /indigoFlights:
- get:
-   queryParameters:
-     source:
-       example:  HYD
-     destination:
-       example : BANG
-     doj:
-      example:  31-MAY-2021
-   responses:
-     200:
-      body:
-       application/json:
-          example:
-                      [
+        get:
+           queryParameters:
+              source:
+                example: HYD
+              destination:
+               example:  BANG
+              doj:
+               example: 31-july-2021
+           responses:
+            200:
+              body:
+                application/json:
+                  example:
+                     [
                         {
                            "ID": 101,
                           "airline": "Indigo",
@@ -54,7 +54,8 @@ baseUri: http://localhost:8081/api
                    "planeType": "Indigo 757"
    }
    ]
- /{source}/{destination}/{doj}:
+   
+/{source}/{destination}/{doj}:
   get:
    queryParameters:
       source:
@@ -122,15 +123,13 @@ baseUri: http://localhost:8081/api
            
              
           
-  
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
+            
+               
+             
+              
+                 
+                      
+                 
+                 
+         
+       
